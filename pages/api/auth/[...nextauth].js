@@ -1,0 +1,48 @@
+import NextAuth from "next-auth"
+import CredentialsProvider from "next-auth/providers/credentials"
+
+export default NextAuth ({
+  // Configure one or more authentication providers
+  providers: [
+    CredentialsProvider({
+      name: 'Credentials', 
+      credentials: {
+        username: { label: "Username", type: "text" }, 
+        password: { label: "Password", type: "password" },
+        // "username" : "karn.yong@melivecode.com",
+        // "password" : "melivecode"
+      },
+      async authorize(credentials, req) {
+        const res = await fetch("https://www.melivecode.com/api/login", {
+          method: 'POST',
+          body: JSON.stringify(credentials),
+          headers: { "Content-Type": "application/json" }
+        })
+        const data = await res.json()
+        if(data.status == "ok") {
+          return data.user
+        }
+        return null
+      }
+    })
+  ],
+  //set secret session 
+    secret: "LlKq6ZtYbr+hTC073mAmAh9/h2HwMfsFo4hrfCx5mLg=",
+  //callbacks
+  callbacks: {
+    async jwt({ token, user, account }) {
+      if (account) {
+        token.accessToken = account.access_token
+        token.user = user
+      }
+      return token
+    },
+
+    async session({ session, token, user }) {
+      session.accessToken = token.accessToken      
+      session.user = token.user
+      return session
+    }
+  }
+
+})
